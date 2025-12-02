@@ -1,0 +1,3 @@
+{"id": "userA", "timestamp": "hhmms1", "type": "new", "branch": "ZZA", "account": 123456}
+{"id": "userA", "timestamp": "hhmms2", "type": "mod", "branch": "ZZA", "account": 123456}
+{"id": "userB", "timestamp": "hhmms3", "type": "new", "branch": "ZZB", "account": 123456}
