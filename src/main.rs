@@ -1,4 +1,4 @@
-use notify::{Config, Event, EventKind, RecommendedWatcher, RecursiveMode, Watcher};
+use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
 use serde_json::{from_str, to_string_pretty};
 use std::fs::{File, OpenOptions};
@@ -10,7 +10,6 @@ use tokio::sync::mpsc;
 
 #[derive(Debug, Deserialize)]
 struct InputRecord {
-    id: String,
     timestamp: String,
     #[serde(rename = "type")]
     record_type: String, // 'type'はRustのキーワードなので'record_type'に変更
@@ -94,8 +93,8 @@ fn process_new_lines(
 #[tokio::main]
 async fn main() -> notify::Result<()> {
     // --- ファイルパス設定 ---
-    let input_file_path_str = "file_a.json";
-    let output_file_path_str = "file_b.json";
+    let input_file_path_str = "file_a.txt";
+    let output_file_path_str = "file_b.txt";
 
     let input_path = Path::new(input_file_path_str);
     let output_path = Path::new(output_file_path_str);
@@ -117,6 +116,12 @@ async fn main() -> notify::Result<()> {
             Ok(_) => println!("Initial file processing complete. Offset set to {}.", current_offset),
             Err(e) => eprintln!("Initial file processing failed: {}", e),
         }
+    }
+
+    // 監視対象のファイルが存在しない場合、touchコマンドのように空のファイルを作成する
+    if !input_path.exists() {
+        println!("Input file not found. Creating an empty file: {}", input_file_path_str);
+        File::create(input_path)?;
     }
 
     // --- ファイル監視のセットアップ ---
@@ -144,7 +149,11 @@ async fn main() -> notify::Result<()> {
         match res {
             Ok(event) => {
                 // ファイルAの変更イベントのみを処理対象とする
-                if event.kind.is_modify() && event.paths.contains(input_path) {
+                if (event.kind.is_modify() || event.kind.is_create())
+                    && event
+                        .paths
+                        .contains(&input_path.to_path_buf())
+                {
                     println!("Detected file modification: {:?}", event.kind);
                     match process_new_lines(input_path, output_path, &mut current_offset) {
                         Ok(_) => {
