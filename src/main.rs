@@ -93,8 +93,8 @@ fn process_new_lines(
 #[tokio::main]
 async fn main() -> notify::Result<()> {
     // --- ファイルパス設定 ---
-    let input_file_path_str = "file_a.txt";
-    let output_file_path_str = "file_b.txt";
+    let input_file_path_str = "file_a.log";
+    let output_file_path_str = "file_b.log";
 
     let output_path = Path::new(output_file_path_str);
 
