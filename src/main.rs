@@ -96,34 +96,33 @@ async fn main() -> notify::Result<()> {
     let input_file_path_str = "file_a.txt";
     let output_file_path_str = "file_b.txt";
 
-    let input_path = Path::new(input_file_path_str);
     let output_path = Path::new(output_file_path_str);
+
+    // 監視対象のファイルが存在しない場合、touchコマンドのように空のファイルを作成する
+    if !Path::new(input_file_path_str).exists() {
+        println!("Input file not found. Creating an empty file: {}", input_file_path_str);
+        File::create(input_file_path_str)?;
+    }
+
+    // 監視対象ファイルの絶対パスを取得する
+    let input_path = std::fs::canonicalize(input_file_path_str)?;
 
     println!(
         "Watching file: {}",
-        input_path.to_str().unwrap_or("N/A")
+        input_path.display()
     );
     println!(
         "Output file: {}",
-        output_path.to_str().unwrap_or("N/A")
+        output_path.display()
     );
 
     // --- 初期オフセットの設定と初期処理 ---
     // 監視開始前に、ファイルAが存在すれば一度全行を処理し、オフセットを終端に設定する
     let mut current_offset: u64 = 0;
-    if input_path.exists() {
-        match process_new_lines(input_path, output_path, &mut current_offset) {
-            Ok(_) => println!("Initial file processing complete. Offset set to {}.", current_offset),
-            Err(e) => eprintln!("Initial file processing failed: {}", e),
-        }
+    match process_new_lines(&input_path, output_path, &mut current_offset) {
+        Ok(_) => println!("Initial file processing complete. Offset set to {}.", current_offset),
+        Err(e) => eprintln!("Initial file processing failed: {}", e),
     }
-
-    // 監視対象のファイルが存在しない場合、touchコマンドのように空のファイルを作成する
-    if !input_path.exists() {
-        println!("Input file not found. Creating an empty file: {}", input_file_path_str);
-        File::create(input_path)?;
-    }
-
     // --- ファイル監視のセットアップ ---
 
     // notifyからのイベントを受け取るためのチャネルを作成
@@ -142,27 +141,30 @@ async fn main() -> notify::Result<()> {
     )?;
 
     // 監視対象のパスを設定
-    watcher.watch(input_path, RecursiveMode::NonRecursive)?;
+    watcher.watch(&input_path, RecursiveMode::NonRecursive)?;
 
     // --- イベントループ ---
     while let Some(res) = rx.recv().await {
         match res {
             Ok(event) => {
-                // ファイルAの変更イベントのみを処理対象とする
-                if (event.kind.is_modify() || event.kind.is_create())
-                    && event
-                        .paths
-                        .contains(&input_path.to_path_buf())
-                {
-                    println!("Detected file modification: {:?}", event.kind);
-                    match process_new_lines(input_path, output_path, &mut current_offset) {
-                        Ok(_) => {
-                            println!("Processing complete. New offset: {}", current_offset);
-                        }
-                        Err(e) => {
-                            eprintln!("Error during file processing: {}", e);
+                // ファイルAに対する変更イベントのみを処理する
+                // ファイルへの追記は Modify(Data) として通知されることが多い
+                use notify::event::{EventKind, ModifyKind};
+                match event.kind {
+                    EventKind::Modify(ModifyKind::Data(_)) | EventKind::Create(_) => {
+                        if event.paths.contains(&input_path) {
+                            println!("Detected file modification for {:?}: {:?}", input_path.file_name().unwrap_or_default(), event.kind);
+                            match process_new_lines(&input_path, output_path, &mut current_offset) {
+                                Ok(_) => {
+                                    println!("Processing complete. New offset: {}", current_offset);
+                                }
+                                Err(e) => {
+                                    eprintln!("Error during file processing: {}", e);
+                                }
+                            }
                         }
                     }
+                    _ => { /* その他のイベントは無視 */ }
                 }
             }
             Err(e) => {
