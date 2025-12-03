@@ -51,3 +51,5 @@
 {"timestamp": "hhmms5", "branch_account": "ZZB-123456"}
 {"timestamp": "hhmms6", "branch_account": "ZZC-123456"}
 ```
+
+https://github.com/user-attachments/assets/cb91556a-ae9f-4654-ba43-33a94c38116d
