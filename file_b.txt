@@ -1,4 +1,0 @@
-{
-  "timestamp": "hhmms2",
-  "branch_account": "ZZA-123456"
-}
