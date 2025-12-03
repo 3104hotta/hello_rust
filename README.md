@@ -1,10 +1,6 @@
-# ファイル監視・変換プログラム
+# 課題
 
-## 概要
-
-特定のJSON Lines形式の入力ファイル（ファイルA）を監視し、内容が追記されるたびにデータを処理して、別のファイル（ファイルB）にJSON形式で出力し続けるRustプログラムです。
-
-ファイル監視には `notify` クレートを利用します。
+ファイルA（JSON形式）をRustのnotifyクレートを利用して読み込み続け、ファイルB（JSON形式）を出力し続けるプログラムをRustで実装する。
 
 ## 仕様
 
@@ -35,7 +31,7 @@
 {"id": "userB", "timestamp": "hhmms3", "type": "new", "branch": "ZZB", "account": 123456}
 ```
 
-プログラムを起動すると、`"type": "mod"` の行が処理され、**ファイルBに以下の内容が出力されます。**
+プログラムを起動すると、`"type": "mod"` の行が処理され、**ファイルBに以下の内容が出力される。**
 ```json
 {"timestamp": "hhmms2", "branch_account": "ZZA-123456"}
 {"timestamp": "hhmms3", "branch_account": "ZZB-123456"}
@@ -43,14 +39,14 @@
 
 ### 2. ファイルAへの追記
 
-プログラムを稼働させたまま、**ファイルAに以下の3行を追記します。**
+プログラムを稼働させたまま、**ファイルAに以下の3行を追記する。**
 ```json
 {"id": "userC", "timestamp": "hhmms4", "type": "new", "branch": "ZZC", "account": 123456}
 {"id": "userB", "timestamp": "hhmms5", "type": "mod", "branch": "ZZB", "account": 123456}
 {"id": "userC", "timestamp": "hhmms6", "type": "mod", "branch": "ZZC", "account": 123456}
 ```
 
-追記された `"type": "mod"` の行が処理され、**ファイルBに以下の内容が追記されます。**
+追記された `"type": "mod"` の行が処理され、**ファイルBに以下の内容が追記される。**
 ```json
 {"timestamp": "hhmms5", "branch_account": "ZZB-123456"}
 {"timestamp": "hhmms6", "branch_account": "ZZC-123456"}
