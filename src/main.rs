@@ -1,6 +1,6 @@
 use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use serde::{Deserialize, Serialize};
-use serde_json::{from_str, to_string_pretty};
+use serde_json::{from_str, to_string};
 use std::fs::{File, OpenOptions};
 use std::io::{self, BufReader, Read, Seek, SeekFrom, Write};
 use std::path::Path;
@@ -72,8 +72,8 @@ fn process_new_lines(
                         branch_account,
                     };
 
-                    // JSON形式にシリアライズし、改行を追加してファイルBに書き込む
-                    let output_json = to_string_pretty(&output).unwrap_or_default();
+                    // JSON形式(1行)にシリアライズし、改行を追加してファイルBに書き込む
+                    let output_json = to_string(&output).unwrap_or_default();
                     writeln!(file_b, "{}", output_json)?;
                 }
             }
